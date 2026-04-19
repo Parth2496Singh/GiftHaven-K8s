@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useCart } from "@/lib/cart-context";
+import { formatINR } from "@/lib/format";
 
 const Cart = () => {
   const { items, updateQuantity, removeItem, toggleGiftWrap, setMessage, totalPrice } = useCart();
@@ -45,7 +46,7 @@ const Cart = () => {
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
-                  <p className="text-lg font-bold text-foreground">${(item.price * item.quantity).toFixed(2)}</p>
+                  <p className="text-lg font-bold text-foreground">{formatINR(item.price * item.quantity)}</p>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center border border-border rounded-full">
                       <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="h-8 w-8 flex items-center justify-center hover:bg-secondary rounded-l-full">
@@ -77,13 +78,13 @@ const Cart = () => {
             <h3 className="font-serif font-bold text-lg text-foreground">Order Summary</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between text-muted-foreground">
-                <span>Subtotal</span><span>${totalPrice.toFixed(2)}</span>
+                <span>Subtotal</span><span>{formatINR(totalPrice)}</span>
               </div>
               <div className="flex justify-between text-muted-foreground">
-                <span>Shipping</span><span>{totalPrice > 50 ? "Free" : "$5.99"}</span>
+                <span>Shipping</span><span>{totalPrice > 999 ? "Free" : formatINR(99)}</span>
               </div>
               <div className="border-t border-border pt-2 flex justify-between font-bold text-foreground text-base">
-                <span>Total</span><span>${(totalPrice + (totalPrice > 50 ? 0 : 5.99)).toFixed(2)}</span>
+                <span>Total</span><span>{formatINR(totalPrice + (totalPrice > 999 ? 0 : 99))}</span>
               </div>
             </div>
             <input type="text" placeholder="Coupon code" className="w-full p-3 rounded-lg bg-secondary text-sm border-none focus:outline-none focus:ring-2 focus:ring-primary/30" />

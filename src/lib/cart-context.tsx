@@ -60,7 +60,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearCart = useCallback(() => setItems([]), []);
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
-  const totalPrice = items.reduce((sum, i) => sum + i.price * i.quantity + (i.giftWrap ? 4.99 * i.quantity : 0), 0);
+  const totalPrice = items.reduce((sum, i) => sum + i.price * i.quantity + (i.giftWrap ? 99 * i.quantity : 0), 0);
 
   return (
     <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, toggleGiftWrap, setMessage, clearCart, totalItems, totalPrice }}>

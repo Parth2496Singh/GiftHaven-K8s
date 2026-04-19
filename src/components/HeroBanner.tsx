@@ -28,7 +28,7 @@ const HeroBanner = () => {
                 Shop Now <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="rounded-full px-8 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+            <Button asChild variant="outline" size="lg" className="rounded-full px-8 bg-primary-foreground/10 backdrop-blur-sm border-primary-foreground/60 text-primary-foreground hover:bg-primary-foreground hover:text-primary">
               <Link to="/category/anniversary-gifts">Explore Collections</Link>
             </Button>
           </div>

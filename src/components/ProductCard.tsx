@@ -3,6 +3,7 @@ import { Heart, Star, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/lib/cart-context";
+import { formatINR } from "@/lib/format";
 import type { Product } from "@/lib/products";
 
 const ProductCard = ({ product }: { product: Product }) => {
@@ -13,8 +14,19 @@ const ProductCard = ({ product }: { product: Product }) => {
 
   return (
     <div className="group bg-card rounded-xl border border-border overflow-hidden shadow-sm hover:shadow-gift transition-all duration-300">
-      <Link to={`/product/${product.id}`} className="block relative aspect-square overflow-hidden">
-        <img src={product.image} alt={product.name} loading="lazy" width={400} height={400} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+      <Link to={`/product/${product.id}`} className="block relative aspect-square overflow-hidden bg-secondary">
+        <img
+          src={product.image}
+          alt={product.name}
+          loading="lazy"
+          width={400}
+          height={400}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src =
+              "https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=600&h=600&q=80";
+          }}
+        />
         {product.badge && (
           <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs">{product.badge}</Badge>
         )}
@@ -37,9 +49,9 @@ const ProductCard = ({ product }: { product: Product }) => {
         </div>
         <div className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-foreground">${product.price}</span>
+            <span className="text-lg font-bold text-foreground">{formatINR(product.price)}</span>
             {product.originalPrice && (
-              <span className="text-sm text-muted-foreground line-through">${product.originalPrice}</span>
+              <span className="text-sm text-muted-foreground line-through">{formatINR(product.originalPrice)}</span>
             )}
           </div>
           <Button

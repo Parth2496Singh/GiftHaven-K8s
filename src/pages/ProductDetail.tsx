@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import ProductSection from "@/components/ProductSection";
 import { products } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
+import { formatINR } from "@/lib/format";
 import { useToast } from "@/hooks/use-toast";
 
 const ProductDetail = () => {
@@ -68,10 +69,10 @@ const ProductDetail = () => {
               <span className="text-sm text-muted-foreground">({product.reviews} reviews)</span>
             </div>
             <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-bold text-foreground">${product.price}</span>
+              <span className="text-3xl font-bold text-foreground">{formatINR(product.price)}</span>
               {product.originalPrice && (
                 <>
-                  <span className="text-lg text-muted-foreground line-through">${product.originalPrice}</span>
+                  <span className="text-lg text-muted-foreground line-through">{formatINR(product.originalPrice)}</span>
                   <Badge variant="secondary" className="bg-accent/10 text-accent">Save {discount}%</Badge>
                 </>
               )}
@@ -81,7 +82,7 @@ const ProductDetail = () => {
               <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" checked={giftWrap} onChange={() => setGiftWrap(!giftWrap)} className="rounded border-border text-primary focus:ring-primary" />
                 <Gift className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-foreground">Add gift wrapping (+$4.99)</span>
+                <span className="text-sm font-medium text-foreground">Add gift wrapping (+₹99)</span>
               </label>
               {giftWrap && (
                 <textarea
@@ -111,7 +112,7 @@ const ProductDetail = () => {
               </Button>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Truck className="h-4 w-4" /> Free shipping on orders over $50
+              <Truck className="h-4 w-4" /> Free shipping on orders over ₹999
             </div>
           </div>
         </div>

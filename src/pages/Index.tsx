@@ -1,4 +1,5 @@
 import Navbar from "@/components/Navbar";
+import OffersStrip from "@/components/OffersStrip";
 import HeroBanner from "@/components/HeroBanner";
 import FeatureBanner from "@/components/FeatureBanner";
 import CategoryGrid from "@/components/CategoryGrid";
@@ -15,6 +16,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+      <OffersStrip />
       <HeroBanner />
       <FeatureBanner />
       <CategoryGrid />
