@@ -1,13 +1,25 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, ShoppingCart, User, Gift, Menu, X, Heart } from "lucide-react";
+import { Search, ShoppingCart, User, Gift, Menu, X, Heart, LogOut } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
+import { useAuth } from "@/lib/auth-context";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 const Navbar = () => {
   const [search, setSearch] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const { totalItems } = useCart();
+  const { user, signOut } = useAuth();
 
   const navLinks = [
     { label: "Birthday", to: "/category/birthday-gifts" },
@@ -17,6 +29,11 @@ const Navbar = () => {
     { label: "Kids", to: "/category/kids-gifts" },
     { label: "Corporate", to: "/category/corporate-gifts" },
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Signed out");
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border shadow-sm">
@@ -52,9 +69,39 @@ const Navbar = () => {
                 </Badge>
               )}
             </Link>
-            <Link to="/account" className="hidden sm:flex items-center justify-center h-10 w-10 rounded-full hover:bg-secondary transition-colors">
-              <User className="h-5 w-5 text-foreground" />
-            </Link>
+
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="hidden sm:flex items-center justify-center h-10 w-10 rounded-full hover:bg-secondary transition-colors">
+                    <User className="h-5 w-5 text-foreground" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-card">
+                  <DropdownMenuLabel className="truncate">{user.email}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/account">My Account</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/orders">Orders</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/wishlist">Wishlist</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button asChild size="sm" className="hidden sm:inline-flex">
+                <Link to="/auth">Sign In</Link>
+              </Button>
+            )}
+
             <button className="md:hidden flex items-center justify-center h-10 w-10" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
@@ -82,6 +129,15 @@ const Navbar = () => {
               {link.label}
             </Link>
           ))}
+          {user ? (
+            <button onClick={handleSignOut} className="block text-sm font-medium text-destructive py-2 w-full text-left">
+              Sign Out
+            </button>
+          ) : (
+            <Link to="/auth" className="block text-sm font-medium text-primary py-2" onClick={() => setMobileOpen(false)}>
+              Sign In / Sign Up
+            </Link>
+          )}
         </div>
       )}
     </header>
