@@ -2,7 +2,7 @@ import { Gift, Truck, Shield, Clock } from "lucide-react";
 
 const features = [
   { icon: Gift, title: "Gift Wrapping", desc: "Beautiful packaging included" },
-  { icon: Truck, title: "Free Shipping", desc: "On orders over $50" },
+  { icon: Truck, title: "Free Shipping", desc: "On orders over ₹999" },
   { icon: Shield, title: "Secure Checkout", desc: "100% safe payments" },
   { icon: Clock, title: "Same Day Delivery", desc: "Order before 2 PM" },
 ];
