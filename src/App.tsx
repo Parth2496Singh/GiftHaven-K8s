@@ -11,6 +11,7 @@ import Cart from "./pages/Cart.tsx";
 import CategoryPage from "./pages/CategoryPage.tsx";
 import Auth from "./pages/Auth.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import ChatWidget from "./components/ChatWidget";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="/category/:slug" element={<CategoryPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <ChatWidget />
           </BrowserRouter>
         </TooltipProvider>
       </CartProvider>
