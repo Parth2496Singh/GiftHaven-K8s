@@ -44,9 +44,15 @@ $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
     sudo systemctl enable docker
     sudo systemctl start docker
 
-    echo "Adding user to docker group..."
-    sudo usermod -aG docker $(whoami)
-    newgrp docker
+    echo "Waiting for Docker daemon..."
+    until docker info >/dev/null 2>&1; do
+        sleep 2
+    done
+
+    echo "Adding ubuntu user to docker group..."
+    sudo groupadd docker || true
+    sudo usermod -aG docker ubuntu
+    sudo systemctl restart docker
 }
 
 deploy_project(){
