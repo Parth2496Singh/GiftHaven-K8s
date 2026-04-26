@@ -1,29 +1,14 @@
 services:
-    nginx:
-        build:
-            context: ./nginx
-        container_name: nginx
-        networks:
-            - gift-ai-network
-        ports:
-            - "80:80"
-        restart: always
-        depends_on:
-            - gift-ai
     gift-ai:
         build: 
             context: .
         container_name: gift-ai-container
-        networks:
-        - gift-ai-network
         ports:
-        - "5173:5173"
-        restart: always
+        - "80:80"
+        restart: unless-stopped
         healthcheck:
-            test: ["CMD", "curl", "-f", "localhost:5173"]
+            test: ["CMD", "curl", "-f", "localhost/index.html"]
             interval: 1m30s
             timeout: 30s
             retries: 5
             start_period: 30s
-networks:
-    gift-ai-network:
