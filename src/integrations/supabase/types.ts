@@ -14,6 +14,110 @@ export type Database = {
   }
   public: {
     Tables: {
+      order_items: {
+        Row: {
+          created_at: string
+          gift_wrap: boolean
+          id: string
+          image: string | null
+          message: string | null
+          name: string
+          order_id: string
+          price: number
+          product_id: number
+          quantity: number
+        }
+        Insert: {
+          created_at?: string
+          gift_wrap?: boolean
+          id?: string
+          image?: string | null
+          message?: string | null
+          name: string
+          order_id: string
+          price: number
+          product_id: number
+          quantity: number
+        }
+        Update: {
+          created_at?: string
+          gift_wrap?: boolean
+          id?: string
+          image?: string | null
+          message?: string | null
+          name?: string
+          order_id?: string
+          price?: number
+          product_id?: number
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          address_line1: string
+          address_line2: string | null
+          city: string
+          created_at: string
+          full_name: string
+          id: string
+          payment_method: string
+          phone: string
+          pincode: string
+          shipping: number
+          state: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address_line1: string
+          address_line2?: string | null
+          city: string
+          created_at?: string
+          full_name: string
+          id?: string
+          payment_method?: string
+          phone: string
+          pincode: string
+          shipping?: number
+          state: string
+          status?: string
+          subtotal: number
+          total: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address_line1?: string
+          address_line2?: string | null
+          city?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          payment_method?: string
+          phone?: string
+          pincode?: string
+          shipping?: number
+          state?: string
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
