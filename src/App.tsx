@@ -10,6 +10,8 @@ import ProductDetail from "./pages/ProductDetail.tsx";
 import Cart from "./pages/Cart.tsx";
 import CategoryPage from "./pages/CategoryPage.tsx";
 import Auth from "./pages/Auth.tsx";
+import Checkout from "./pages/Checkout.tsx";
+import Orders from "./pages/Orders.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import ChatWidget from "./components/ChatWidget";
 
@@ -28,6 +30,8 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/orders" element={<Orders />} />
               <Route path="/category/:slug" element={<CategoryPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

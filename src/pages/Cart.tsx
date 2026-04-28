@@ -88,8 +88,8 @@ const Cart = () => {
               </div>
             </div>
             <input type="text" placeholder="Coupon code" className="w-full p-3 rounded-lg bg-secondary text-sm border-none focus:outline-none focus:ring-2 focus:ring-primary/30" />
-            <Button className="w-full rounded-full bg-gradient-gift text-primary-foreground hover:opacity-90" size="lg">
-              Proceed to Checkout
+            <Button asChild className="w-full rounded-full bg-gradient-gift text-primary-foreground hover:opacity-90" size="lg">
+              <Link to="/checkout">Proceed to Checkout</Link>
             </Button>
             <p className="text-xs text-center text-muted-foreground">Secure checkout · Free returns</p>
           </div>
