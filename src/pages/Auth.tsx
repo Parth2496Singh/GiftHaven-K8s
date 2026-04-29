@@ -80,6 +80,10 @@ const Auth = () => {
   });
   const [signupErrors, setSignupErrors] = useState<SignupErrors>({});
 
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const justVerified = searchParams.get("verified") === "1";
+
   useEffect(() => {
     if (!authLoading && user) navigate("/", { replace: true });
   }, [user, authLoading, navigate]);
@@ -105,6 +109,12 @@ const Auth = () => {
     });
     setLoading(false);
     if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes("not confirmed") || msg.includes("email not confirmed")) {
+        setPendingEmail(parsed.data.email);
+        toast.error("Please verify your email before signing in");
+        return;
+      }
       toast.error(error.message === "Invalid login credentials" ? "Invalid email or password" : error.message);
       return;
     }
@@ -129,7 +139,7 @@ const Auth = () => {
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: `${window.location.origin}/auth?verified=1`,
         data: {
           display_name: parsed.data.displayName,
           phone: parsed.data.phone || null,
@@ -150,21 +160,42 @@ const Auth = () => {
       return;
     }
 
-    // Best-effort: persist phone/address into profile (the trigger creates the row).
-    if (data.user) {
-      await supabase
-        .from("profiles")
-        .update({
-          phone: parsed.data.phone || null,
-          address: parsed.data.address || null,
-        })
-        .eq("user_id", data.user.id);
+    // If a session exists, email confirmation is disabled — log them straight in.
+    if (data.session) {
+      if (data.user) {
+        await supabase
+          .from("profiles")
+          .update({
+            phone: parsed.data.phone || null,
+            address: parsed.data.address || null,
+          })
+          .eq("user_id", data.user.id);
+      }
+      setLoading(false);
+      toast.success("Account created! Welcome to GiftHaven 🎁");
+      navigate("/");
+      return;
     }
 
     setLoading(false);
-    setSignupSuccess(true);
-    toast.success("Account created! Welcome to GiftHaven 🎁");
-    setTimeout(() => navigate("/"), 1200);
+    setPendingEmail(parsed.data.email);
+    toast.success("Verification email sent — check your inbox");
+  };
+
+  const handleResendVerification = async () => {
+    if (!pendingEmail) return;
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: pendingEmail,
+      options: { emailRedirectTo: `${window.location.origin}/auth?verified=1` },
+    });
+    setResending(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Verification email resent");
   };
 
   const handleOAuth = async (provider: "google" | "apple") => {
