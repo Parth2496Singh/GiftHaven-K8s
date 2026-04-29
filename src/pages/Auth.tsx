@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
-import { Gift, Loader2, Mail, Lock, User as UserIcon } from "lucide-react";
+import { Gift, Loader2, Mail, Lock, User as UserIcon, Phone, MapPin, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -9,6 +9,8 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -17,11 +19,28 @@ const loginSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters" }).max(72),
 });
 
-const signupSchema = z.object({
-  displayName: z.string().trim().min(2, { message: "Name must be at least 2 characters" }).max(60),
-  email: z.string().trim().email({ message: "Please enter a valid email" }).max(255),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }).max(72),
-});
+const signupSchema = z
+  .object({
+    displayName: z.string().trim().min(2, { message: "Name must be at least 2 characters" }).max(60),
+    email: z.string().trim().email({ message: "Please enter a valid email" }).max(255),
+    password: z.string().min(6, { message: "Password must be at least 6 characters" }).max(72),
+    confirmPassword: z.string(),
+    phone: z
+      .string()
+      .trim()
+      .max(20, { message: "Phone is too long" })
+      .regex(/^[+()\-\s\d]*$/, { message: "Phone can only contain digits and + - ( )" })
+      .optional()
+      .or(z.literal("")),
+    address: z.string().trim().max(500, { message: "Address must be under 500 characters" }).optional().or(z.literal("")),
+    role: z.enum(["user", "admin"]),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+type SignupErrors = Partial<Record<keyof z.infer<typeof signupSchema>, string>>;
 
 const GoogleIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -46,13 +65,30 @@ const Auth = () => {
 
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
-  const [signupForm, setSignupForm] = useState({ displayName: "", email: "", password: "" });
+  const [signupForm, setSignupForm] = useState({
+    displayName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    phone: "",
+    address: "",
+    role: "user" as "user" | "admin",
+  });
+  const [signupErrors, setSignupErrors] = useState<SignupErrors>({});
 
   useEffect(() => {
     if (!authLoading && user) navigate("/", { replace: true });
   }, [user, authLoading, navigate]);
+
+  const signupValid = useMemo(() => signupSchema.safeParse(signupForm).success, [signupForm]);
+
+  const setField = <K extends keyof typeof signupForm>(key: K, value: (typeof signupForm)[K]) => {
+    setSignupForm((prev) => ({ ...prev, [key]: value }));
+    if (signupErrors[key]) setSignupErrors((prev) => ({ ...prev, [key]: undefined }));
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,25 +115,55 @@ const Auth = () => {
     e.preventDefault();
     const parsed = signupSchema.safeParse(signupForm);
     if (!parsed.success) {
-      toast.error(parsed.error.errors[0].message);
+      const errs: SignupErrors = {};
+      parsed.error.errors.forEach((err) => {
+        const key = err.path[0] as keyof SignupErrors;
+        if (key && !errs[key]) errs[key] = err.message;
+      });
+      setSignupErrors(errs);
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { error, data } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: { display_name: parsed.data.displayName },
+        data: {
+          display_name: parsed.data.displayName,
+          phone: parsed.data.phone || null,
+          address: parsed.data.address || null,
+        },
       },
     });
-    setLoading(false);
+
     if (error) {
-      toast.error(error.message.includes("already registered") ? "This email is already registered" : error.message);
+      setLoading(false);
+      const msg = error.message.toLowerCase();
+      if (msg.includes("already") || msg.includes("registered") || msg.includes("exists")) {
+        setSignupErrors({ email: "This email is already registered" });
+        toast.error("This email is already registered");
+      } else {
+        toast.error(error.message);
+      }
       return;
     }
+
+    // Best-effort: persist phone/address into profile (the trigger creates the row).
+    if (data.user) {
+      await supabase
+        .from("profiles")
+        .update({
+          phone: parsed.data.phone || null,
+          address: parsed.data.address || null,
+        })
+        .eq("user_id", data.user.id);
+    }
+
+    setLoading(false);
+    setSignupSuccess(true);
     toast.success("Account created! Welcome to GiftHaven 🎁");
-    navigate("/");
+    setTimeout(() => navigate("/"), 1200);
   };
 
   const handleOAuth = async (provider: "google" | "apple") => {
@@ -157,36 +223,108 @@ const Auth = () => {
               </TabsContent>
 
               <TabsContent value="signup">
-                <form onSubmit={handleSignup} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name</Label>
-                    <div className="relative">
-                      <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="signup-name" type="text" placeholder="Jane Doe" className="pl-10"
-                        value={signupForm.displayName} onChange={(e) => setSignupForm({ ...signupForm, displayName: e.target.value })} required />
-                    </div>
+                {signupSuccess ? (
+                  <div className="flex flex-col items-center text-center py-8 space-y-3">
+                    <CheckCircle2 className="h-14 w-14 text-primary" />
+                    <h3 className="text-lg font-semibold">Account created!</h3>
+                    <p className="text-sm text-muted-foreground">Redirecting you to the store…</p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="signup-email" type="email" placeholder="you@example.com" className="pl-10"
-                        value={signupForm.email} onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })} required />
+                ) : (
+                  <form onSubmit={handleSignup} className="space-y-4" noValidate>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-name">Full Name <span className="text-destructive">*</span></Label>
+                      <div className="relative">
+                        <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input id="signup-name" type="text" placeholder="Jane Doe" className="pl-10"
+                          value={signupForm.displayName}
+                          onChange={(e) => setField("displayName", e.target.value)}
+                          aria-invalid={!!signupErrors.displayName} />
+                      </div>
+                      {signupErrors.displayName && <p className="text-xs text-destructive">{signupErrors.displayName}</p>}
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="signup-password" type="password" placeholder="At least 6 characters" className="pl-10"
-                        value={signupForm.password} onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })} required />
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-email">Email <span className="text-destructive">*</span></Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input id="signup-email" type="email" placeholder="you@example.com" className="pl-10"
+                          value={signupForm.email}
+                          onChange={(e) => setField("email", e.target.value)}
+                          aria-invalid={!!signupErrors.email} />
+                      </div>
+                      {signupErrors.email && <p className="text-xs text-destructive">{signupErrors.email}</p>}
                     </div>
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                    Create Account
-                  </Button>
-                </form>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-password">Password <span className="text-destructive">*</span></Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input id="signup-password" type="password" placeholder="At least 6 characters" className="pl-10"
+                          value={signupForm.password}
+                          onChange={(e) => setField("password", e.target.value)}
+                          aria-invalid={!!signupErrors.password} />
+                      </div>
+                      {signupErrors.password && <p className="text-xs text-destructive">{signupErrors.password}</p>}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-confirm">Confirm Password <span className="text-destructive">*</span></Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input id="signup-confirm" type="password" placeholder="Re-enter password" className="pl-10"
+                          value={signupForm.confirmPassword}
+                          onChange={(e) => setField("confirmPassword", e.target.value)}
+                          aria-invalid={!!signupErrors.confirmPassword} />
+                      </div>
+                      {signupErrors.confirmPassword && <p className="text-xs text-destructive">{signupErrors.confirmPassword}</p>}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-phone">Phone <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input id="signup-phone" type="tel" placeholder="+91 98765 43210" className="pl-10"
+                          value={signupForm.phone}
+                          onChange={(e) => setField("phone", e.target.value)}
+                          aria-invalid={!!signupErrors.phone} />
+                      </div>
+                      {signupErrors.phone && <p className="text-xs text-destructive">{signupErrors.phone}</p>}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-address">Address <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Textarea id="signup-address" placeholder="Street, city, state, pincode" className="pl-10 min-h-[80px]"
+                          value={signupForm.address}
+                          onChange={(e) => setField("address", e.target.value)}
+                          aria-invalid={!!signupErrors.address} />
+                      </div>
+                      {signupErrors.address && <p className="text-xs text-destructive">{signupErrors.address}</p>}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-role">Role</Label>
+                      <Select value={signupForm.role} onValueChange={(v) => setField("role", v as "user" | "admin")}>
+                        <SelectTrigger id="signup-role">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">User</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        New accounts are created as <strong>user</strong>. Admin access is granted manually.
+                      </p>
+                    </div>
+
+                    <Button type="submit" className="w-full" disabled={loading || !signupValid}>
+                      {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                      Create Account
+                    </Button>
+                  </form>
+                )}
               </TabsContent>
             </Tabs>
 
