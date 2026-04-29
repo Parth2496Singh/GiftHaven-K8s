@@ -65,7 +65,10 @@ export type Database = {
         Row: {
           address_line1: string
           address_line2: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           city: string
+          courier: string | null
           created_at: string
           full_name: string
           id: string
@@ -77,13 +80,17 @@ export type Database = {
           status: string
           subtotal: number
           total: number
+          tracking_number: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           address_line1: string
           address_line2?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           city: string
+          courier?: string | null
           created_at?: string
           full_name: string
           id?: string
@@ -95,13 +102,17 @@ export type Database = {
           status?: string
           subtotal: number
           total: number
+          tracking_number?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           address_line1?: string
           address_line2?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           city?: string
+          courier?: string | null
           created_at?: string
           full_name?: string
           id?: string
@@ -113,6 +124,7 @@ export type Database = {
           status?: string
           subtotal?: number
           total?: number
+          tracking_number?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -151,6 +163,36 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          product_id: number
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          product_id: number
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          product_id?: number
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -168,6 +210,39 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wishlist: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          image: string | null
+          name: string
+          price: number
+          product_id: number
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          image?: string | null
+          name: string
+          price: number
+          product_id: number
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          image?: string | null
+          name?: string
+          price?: number
+          product_id?: number
           user_id?: string
         }
         Relationships: []
