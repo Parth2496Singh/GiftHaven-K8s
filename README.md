@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎁 GiftAI
+# 🎁 GiftHaven
 
 **An AI-First E-Commerce Platform & Smart Recommendation Engine**
 
@@ -28,7 +28,7 @@
 
 ## 📖 About the Project
 
-This repository contains the application codebase for **GiftAI**. It is an advanced e-commerce platform built to provide smart product recommendations, a seamless shopping experience, and robust user management. The platform utilizes a modern containerized architecture, blending a high-performance React frontend with a dual-backend system for e-commerce logic and AI functionalities.
+This repository contains the application codebase for **GiftHaven**. It is an advanced e-commerce platform built to provide smart product recommendations, a seamless shopping experience, and robust user management. The platform utilizes a modern containerized architecture, blending a high-performance React frontend with a dual-backend system for e-commerce logic and AI functionalities.
 
 ---
 
@@ -107,7 +107,7 @@ Follow these instructions to set up the frontend project locally for development
 
 ## 🚢 Architecture and Deployment
 
-The GiftAI platform uses a modern containerized architecture. The entire stack (Frontend, API services, and dependencies) is orchestrated using Docker Compose. The application is hosted on an AWS EC2 instance, utilizing Nginx as a reverse proxy to serve the React application and route API requests securely.
+The GiftHaven platform uses a modern containerized architecture. The entire stack (Frontend, API services, and dependencies) is orchestrated using Docker Compose. The application is hosted on an AWS EC2 instance, utilizing Nginx as a reverse proxy to serve the React application and route API requests securely.
 
 ### 🌍 Live Access
 
