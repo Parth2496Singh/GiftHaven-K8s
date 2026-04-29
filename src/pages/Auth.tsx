@@ -262,11 +262,34 @@ const Auth = () => {
               </TabsContent>
 
               <TabsContent value="signup">
-                {signupSuccess ? (
-                  <div className="flex flex-col items-center text-center py-8 space-y-3">
-                    <CheckCircle2 className="h-14 w-14 text-primary" />
-                    <h3 className="text-lg font-semibold">Account created!</h3>
-                    <p className="text-sm text-muted-foreground">Redirecting you to the store…</p>
+                {pendingEmail ? (
+                  <div className="flex flex-col items-center text-center py-6 space-y-4">
+                    <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                      <MailCheck className="h-8 w-8 text-primary" />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-semibold">Verify your email</h3>
+                      <p className="text-sm text-muted-foreground">
+                        We sent a confirmation link to{" "}
+                        <span className="font-medium text-foreground">{pendingEmail}</span>.
+                        Click the link in the email to activate your account.
+                      </p>
+                    </div>
+                    <Alert className="text-left">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="text-xs">
+                        Don't see it? Check your spam folder. The link expires after a short time.
+                      </AlertDescription>
+                    </Alert>
+                    <div className="flex flex-col gap-2 w-full">
+                      <Button type="button" variant="outline" onClick={handleResendVerification} disabled={resending}>
+                        {resending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                        Resend verification email
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setPendingEmail(null)}>
+                        Use a different email
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <form onSubmit={handleSignup} className="space-y-4" noValidate>
