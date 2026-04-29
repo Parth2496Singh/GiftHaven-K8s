@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, ShoppingCart, User, Gift, Menu, X, Heart, LogOut } from "lucide-react";
+import { ShoppingCart, User, Gift, Menu, X, Heart, LogOut } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { useAuth } from "@/lib/auth-context";
+import { useWishlist } from "@/lib/wishlist-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,12 +15,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import SearchBar from "@/components/SearchBar";
 
 const Navbar = () => {
-  const [search, setSearch] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const { totalItems } = useCart();
   const { user, signOut } = useAuth();
+  const { items: wishlistItems } = useWishlist();
 
   const navLinks = [
     { label: "Birthday", to: "/category/birthday-gifts" },
@@ -28,6 +30,7 @@ const Navbar = () => {
     { label: "For Her", to: "/category/gifts-for-her" },
     { label: "Kids", to: "/category/kids-gifts" },
     { label: "Corporate", to: "/category/corporate-gifts" },
+    { label: "About", to: "/about" },
   ];
 
   const handleSignOut = async () => {
@@ -45,21 +48,17 @@ const Navbar = () => {
           </Link>
 
           <div className="hidden md:flex flex-1 max-w-xl mx-4">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search for the perfect gift..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-full bg-secondary border-none text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
-            </div>
+            <SearchBar />
           </div>
 
           <div className="flex items-center gap-3">
-            <Link to="/wishlist" className="hidden sm:flex items-center justify-center h-10 w-10 rounded-full hover:bg-secondary transition-colors">
+            <Link to="/wishlist" className="relative hidden sm:flex items-center justify-center h-10 w-10 rounded-full hover:bg-secondary transition-colors">
               <Heart className="h-5 w-5 text-foreground" />
+              {wishlistItems.length > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] bg-primary text-primary-foreground border-2 border-card">
+                  {wishlistItems.length}
+                </Badge>
+              )}
             </Link>
             <Link to="/cart" className="relative flex items-center justify-center h-10 w-10 rounded-full hover:bg-secondary transition-colors">
               <ShoppingCart className="h-5 w-5 text-foreground" />
@@ -119,20 +118,20 @@ const Navbar = () => {
 
       {mobileOpen && (
         <div className="md:hidden bg-card border-t border-border px-4 py-4 space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input type="text" placeholder="Search gifts..." value={search} onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-full bg-secondary text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-          </div>
+          <SearchBar compact onNavigate={() => setMobileOpen(false)} />
           {navLinks.map((link) => (
             <Link key={link.to} to={link.to} className="block text-sm font-medium text-foreground py-2" onClick={() => setMobileOpen(false)}>
               {link.label}
             </Link>
           ))}
           {user ? (
-            <button onClick={handleSignOut} className="block text-sm font-medium text-destructive py-2 w-full text-left">
-              Sign Out
-            </button>
+            <>
+              <Link to="/account" className="block text-sm font-medium text-foreground py-2" onClick={() => setMobileOpen(false)}>My Account</Link>
+              <Link to="/wishlist" className="block text-sm font-medium text-foreground py-2" onClick={() => setMobileOpen(false)}>Wishlist</Link>
+              <button onClick={handleSignOut} className="block text-sm font-medium text-destructive py-2 w-full text-left">
+                Sign Out
+              </button>
+            </>
           ) : (
             <Link to="/auth" className="block text-sm font-medium text-primary py-2" onClick={() => setMobileOpen(false)}>
               Sign In / Sign Up

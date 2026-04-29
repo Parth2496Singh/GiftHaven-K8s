@@ -1,20 +1,24 @@
-import { useParams, Link } from "react-router-dom";
-import { Star, ShoppingCart, Heart, Gift, Truck, ArrowLeft, Minus, Plus } from "lucide-react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { Star, ShoppingCart, Heart, Gift, Truck, ArrowLeft, Minus, Plus, Zap } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductSection from "@/components/ProductSection";
+import ProductReviews from "@/components/ProductReviews";
 import { products } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
+import { useWishlist } from "@/lib/wishlist-context";
 import { formatINR } from "@/lib/format";
 import { useToast } from "@/hooks/use-toast";
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const product = products.find((p) => p.id === Number(id));
-  const { addItem } = useCart();
+  const { addItem, clearCart } = useCart();
+  const { isInWishlist, toggle } = useWishlist();
   const { toast } = useToast();
   const [qty, setQty] = useState(1);
   const [giftWrap, setGiftWrap] = useState(false);
@@ -32,6 +36,7 @@ const ProductDetail = () => {
     );
   }
 
+  const liked = isInWishlist(product.id);
   const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
   const discount = product.originalPrice ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
 
@@ -40,6 +45,14 @@ const ProductDetail = () => {
       addItem({ id: product.id, name: product.name, price: product.price, image: product.image, giftWrap, message });
     }
     toast({ title: "Added to cart!", description: `${product.name} × ${qty}` });
+  };
+
+  const handleBuyNow = () => {
+    clearCart();
+    for (let i = 0; i < qty; i++) {
+      addItem({ id: product.id, name: product.name, price: product.price, image: product.image, giftWrap, message });
+    }
+    navigate("/checkout");
   };
 
   return (
@@ -104,19 +117,29 @@ const ProductDetail = () => {
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
-              <Button onClick={handleAddToCart} size="lg" className="flex-1 rounded-full bg-gradient-gift text-primary-foreground hover:opacity-90">
+              <Button onClick={handleAddToCart} size="lg" variant="outline" className="flex-1 rounded-full">
                 <ShoppingCart className="h-4 w-4 mr-2" /> Add to Cart
               </Button>
-              <Button variant="outline" size="lg" className="rounded-full h-12 w-12 p-0">
-                <Heart className="h-5 w-5" />
+              <Button
+                variant="outline"
+                size="lg"
+                className={`rounded-full h-12 w-12 p-0 ${liked ? "text-primary border-primary" : ""}`}
+                onClick={() => toggle({ product_id: product.id, name: product.name, price: product.price, image: product.image, category: product.category })}
+                aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
+              >
+                <Heart className={`h-5 w-5 ${liked ? "fill-current" : ""}`} />
               </Button>
             </div>
+            <Button onClick={handleBuyNow} size="lg" className="w-full rounded-full bg-gradient-gift text-primary-foreground hover:opacity-90">
+              <Zap className="h-4 w-4 mr-2" /> Buy Now
+            </Button>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Truck className="h-4 w-4" /> Free shipping on orders over ₹999
             </div>
           </div>
         </div>
       </div>
+      <ProductReviews productId={product.id} />
       {related.length > 0 && <ProductSection title="You May Also Like" products={related} />}
       <Footer />
     </div>

@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { Package, Loader2, ArrowLeft } from "lucide-react";
+import { Package, Loader2, ArrowLeft, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import OrderTracking from "@/components/OrderTracking";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { formatINR } from "@/lib/format";
+import { toast } from "sonner";
 
 interface OrderItem {
   id: string;
@@ -25,6 +31,9 @@ interface Order {
   city: string;
   pincode: string;
   payment_method: string;
+  tracking_number: string | null;
+  courier: string | null;
+  cancelled_at: string | null;
   order_items: OrderItem[];
 }
 
@@ -36,25 +45,61 @@ const statusColor: Record<string, string> = {
   cancelled: "bg-red-500/20 text-red-700 dark:text-red-400",
 };
 
+const CANCELLABLE = new Set(["pending", "confirmed"]);
+
 const Orders = () => {
   const { user, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("orders")
-      .select("id, status, total, created_at, city, pincode, payment_method, order_items(id, name, image, price, quantity, gift_wrap)")
-      .order("created_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (error) console.error(error);
-        else setOrders((data as any) || []);
-        setLoading(false);
-      });
+    let mounted = true;
+    const load = async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("id, status, total, created_at, city, pincode, payment_method, tracking_number, courier, cancelled_at, order_items(id, name, image, price, quantity, gift_wrap)")
+        .order("created_at", { ascending: false });
+      if (!mounted) return;
+      if (error) console.error(error);
+      else setOrders((data as any) || []);
+      setLoading(false);
+    };
+    load();
+
+    // Realtime subscription for live order updates
+    const channel = supabase
+      .channel(`orders-${user.id}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, (payload) => {
+        const updated = payload.new as Order;
+        setOrders((prev) => prev.map((o) => (o.id === updated.id ? { ...o, ...updated } : o)));
+        toast.info(`Order #${updated.id.slice(0, 8).toUpperCase()} → ${updated.status}`);
+      })
+      .subscribe();
+
+    return () => {
+      mounted = false;
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
+
+  const handleCancel = async (orderId: string) => {
+    setCancelling(orderId);
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: "cancelled", cancelled_at: new Date().toISOString(), cancellation_reason: "Cancelled by customer" })
+      .eq("id", orderId);
+    setCancelling(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: "cancelled", cancelled_at: new Date().toISOString() } : o)));
+    toast.success("Order cancelled");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -95,6 +140,16 @@ const Orders = () => {
                   </div>
                   <Badge className={statusColor[o.status] || "bg-secondary"}>{o.status}</Badge>
                 </div>
+
+                <OrderTracking status={o.status} />
+
+                {o.tracking_number && o.status !== "cancelled" && (
+                  <p className="text-xs text-muted-foreground">
+                    Tracking: <span className="font-mono text-foreground">{o.tracking_number}</span>
+                    {o.courier && ` · ${o.courier}`}
+                  </p>
+                )}
+
                 <div className="border-t border-border pt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {o.order_items?.map((it) => (
                     <div key={it.id} className="flex gap-3">
@@ -107,7 +162,35 @@ const Orders = () => {
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground">Shipping to {o.city} · {o.pincode} · Payment: {o.payment_method.toUpperCase()}</p>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                  <p className="text-xs text-muted-foreground">Shipping to {o.city} · {o.pincode} · Payment: {o.payment_method.toUpperCase()}</p>
+                  {CANCELLABLE.has(o.status) && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" disabled={cancelling === o.id}>
+                          {cancelling === o.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5 mr-1" />}
+                          Cancel Order
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Cancel this order?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Your order #{o.id.slice(0, 8).toUpperCase()} will be cancelled. This cannot be undone.
+                            Refunds (if applicable) will be processed in 5–7 business days.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Keep Order</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleCancel(o.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Yes, Cancel
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
               </div>
             ))}
           </div>
