@@ -3,11 +3,14 @@ import { Heart, Star, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/lib/cart-context";
+import { useWishlist } from "@/lib/wishlist-context";
 import { formatINR } from "@/lib/format";
 import type { Product } from "@/lib/products";
 
 const ProductCard = ({ product }: { product: Product }) => {
   const { addItem } = useCart();
+  const { isInWishlist, toggle } = useWishlist();
+  const liked = isInWishlist(product.id);
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
@@ -33,8 +36,17 @@ const ProductCard = ({ product }: { product: Product }) => {
         {discount > 0 && (
           <Badge className="absolute top-3 right-3 bg-accent text-accent-foreground text-xs">-{discount}%</Badge>
         )}
-        <button className="absolute bottom-3 right-3 h-8 w-8 rounded-full bg-card/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary hover:text-primary-foreground">
-          <Heart className="h-4 w-4" />
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            toggle({ product_id: product.id, name: product.name, price: product.price, image: product.image, category: product.category });
+          }}
+          aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
+          className={`absolute bottom-3 right-3 h-8 w-8 rounded-full flex items-center justify-center transition-all ${
+            liked ? "bg-primary text-primary-foreground opacity-100" : "bg-card/90 opacity-0 group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground"
+          }`}
+        >
+          <Heart className={`h-4 w-4 ${liked ? "fill-current" : ""}`} />
         </button>
       </Link>
       <div className="p-4 space-y-2">
@@ -58,6 +70,7 @@ const ProductCard = ({ product }: { product: Product }) => {
             size="sm"
             className="h-8 w-8 p-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={() => addItem({ id: product.id, name: product.name, price: product.price, image: product.image })}
+            aria-label="Add to cart"
           >
             <ShoppingCart className="h-3.5 w-3.5" />
           </Button>
