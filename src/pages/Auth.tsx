@@ -223,7 +223,14 @@ const Auth = () => {
             <CardDescription>Sign in or create an account to start gifting</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue={defaultTab} className="w-full">
+            {justVerified && (
+              <Alert className="mb-4 border-primary/40 bg-primary/5">
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                <AlertTitle>Email verified</AlertTitle>
+                <AlertDescription>Your email is confirmed — sign in below to continue.</AlertDescription>
+              </Alert>
+            )}
+            <Tabs defaultValue={pendingEmail ? "signup" : defaultTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
