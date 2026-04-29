@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
-import { Gift, Loader2, Mail, Lock, User as UserIcon, Phone, MapPin, CheckCircle2 } from "lucide-react";
+import { Gift, Loader2, Mail, Lock, User as UserIcon, Phone, MapPin, CheckCircle2, MailCheck, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -65,7 +66,7 @@ const Auth = () => {
 
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
-  const [signupSuccess, setSignupSuccess] = useState(false);
+  
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [signupForm, setSignupForm] = useState({
@@ -78,6 +79,10 @@ const Auth = () => {
     role: "user" as "user" | "admin",
   });
   const [signupErrors, setSignupErrors] = useState<SignupErrors>({});
+
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const justVerified = searchParams.get("verified") === "1";
 
   useEffect(() => {
     if (!authLoading && user) navigate("/", { replace: true });
@@ -104,6 +109,12 @@ const Auth = () => {
     });
     setLoading(false);
     if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes("not confirmed") || msg.includes("email not confirmed")) {
+        setPendingEmail(parsed.data.email);
+        toast.error("Please verify your email before signing in");
+        return;
+      }
       toast.error(error.message === "Invalid login credentials" ? "Invalid email or password" : error.message);
       return;
     }
@@ -128,7 +139,7 @@ const Auth = () => {
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: `${window.location.origin}/auth?verified=1`,
         data: {
           display_name: parsed.data.displayName,
           phone: parsed.data.phone || null,
@@ -149,21 +160,42 @@ const Auth = () => {
       return;
     }
 
-    // Best-effort: persist phone/address into profile (the trigger creates the row).
-    if (data.user) {
-      await supabase
-        .from("profiles")
-        .update({
-          phone: parsed.data.phone || null,
-          address: parsed.data.address || null,
-        })
-        .eq("user_id", data.user.id);
+    // If a session exists, email confirmation is disabled — log them straight in.
+    if (data.session) {
+      if (data.user) {
+        await supabase
+          .from("profiles")
+          .update({
+            phone: parsed.data.phone || null,
+            address: parsed.data.address || null,
+          })
+          .eq("user_id", data.user.id);
+      }
+      setLoading(false);
+      toast.success("Account created! Welcome to GiftHaven 🎁");
+      navigate("/");
+      return;
     }
 
     setLoading(false);
-    setSignupSuccess(true);
-    toast.success("Account created! Welcome to GiftHaven 🎁");
-    setTimeout(() => navigate("/"), 1200);
+    setPendingEmail(parsed.data.email);
+    toast.success("Verification email sent — check your inbox");
+  };
+
+  const handleResendVerification = async () => {
+    if (!pendingEmail) return;
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: pendingEmail,
+      options: { emailRedirectTo: `${window.location.origin}/auth?verified=1` },
+    });
+    setResending(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Verification email resent");
   };
 
   const handleOAuth = async (provider: "google" | "apple") => {
@@ -191,7 +223,14 @@ const Auth = () => {
             <CardDescription>Sign in or create an account to start gifting</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue={defaultTab} className="w-full">
+            {justVerified && (
+              <Alert className="mb-4 border-primary/40 bg-primary/5">
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                <AlertTitle>Email verified</AlertTitle>
+                <AlertDescription>Your email is confirmed — sign in below to continue.</AlertDescription>
+              </Alert>
+            )}
+            <Tabs defaultValue={pendingEmail ? "signup" : defaultTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -223,11 +262,34 @@ const Auth = () => {
               </TabsContent>
 
               <TabsContent value="signup">
-                {signupSuccess ? (
-                  <div className="flex flex-col items-center text-center py-8 space-y-3">
-                    <CheckCircle2 className="h-14 w-14 text-primary" />
-                    <h3 className="text-lg font-semibold">Account created!</h3>
-                    <p className="text-sm text-muted-foreground">Redirecting you to the store…</p>
+                {pendingEmail ? (
+                  <div className="flex flex-col items-center text-center py-6 space-y-4">
+                    <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                      <MailCheck className="h-8 w-8 text-primary" />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-semibold">Verify your email</h3>
+                      <p className="text-sm text-muted-foreground">
+                        We sent a confirmation link to{" "}
+                        <span className="font-medium text-foreground">{pendingEmail}</span>.
+                        Click the link in the email to activate your account.
+                      </p>
+                    </div>
+                    <Alert className="text-left">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="text-xs">
+                        Don't see it? Check your spam folder. The link expires after a short time.
+                      </AlertDescription>
+                    </Alert>
+                    <div className="flex flex-col gap-2 w-full">
+                      <Button type="button" variant="outline" onClick={handleResendVerification} disabled={resending}>
+                        {resending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                        Resend verification email
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setPendingEmail(null)}>
+                        Use a different email
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <form onSubmit={handleSignup} className="space-y-4" noValidate>
