@@ -66,7 +66,7 @@ const Auth = () => {
 
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
-  const [signupSuccess, setSignupSuccess] = useState(false);
+  
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [signupForm, setSignupForm] = useState({
