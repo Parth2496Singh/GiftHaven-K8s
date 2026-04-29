@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
-import { Gift, Loader2, Mail, Lock, User as UserIcon, Phone, MapPin, CheckCircle2 } from "lucide-react";
+import { Gift, Loader2, Mail, Lock, User as UserIcon, Phone, MapPin, CheckCircle2, MailCheck, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
