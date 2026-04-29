@@ -293,6 +293,12 @@ const Auth = () => {
                   </div>
                 ) : (
                   <form onSubmit={handleSignup} className="space-y-4" noValidate>
+                    <Alert>
+                      <MailCheck className="h-4 w-4" />
+                      <AlertDescription className="text-xs">
+                        After signing up, please verify your email address via the link we send you before you can sign in.
+                      </AlertDescription>
+                    </Alert>
                     <div className="space-y-1.5">
                       <Label htmlFor="signup-name">Full Name <span className="text-destructive">*</span></Label>
                       <div className="relative">
