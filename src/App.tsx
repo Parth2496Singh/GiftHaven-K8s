@@ -17,6 +17,8 @@ import Wishlist from "./pages/Wishlist.tsx";
 import Account from "./pages/Account.tsx";
 import About from "./pages/About.tsx";
 import Search from "./pages/Search.tsx";
+import KitBuilder from "./pages/KitBuilder.tsx";
+import Copilot from "./pages/Copilot.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import ChatWidget from "./components/ChatWidget";
 
@@ -42,6 +44,8 @@ const App = () => (
                 <Route path="/account" element={<Account />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/search" element={<Search />} />
+                <Route path="/kit-builder" element={<KitBuilder />} />
+                <Route path="/copilot" element={<Copilot />} />
                 <Route path="/category/:slug" element={<CategoryPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
