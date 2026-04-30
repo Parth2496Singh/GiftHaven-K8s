@@ -3,11 +3,12 @@ import { Minus, Plus, Trash2, Gift, ArrowLeft, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ContextualUpsell from "@/components/ContextualUpsell";
 import { useCart } from "@/lib/cart-context";
 import { formatINR } from "@/lib/format";
 
 const Cart = () => {
-  const { items, updateQuantity, removeItem, toggleGiftWrap, setMessage, totalPrice } = useCart();
+  const { items, updateQuantity, removeItem, toggleGiftWrap, setMessage, totalPrice, lastAddedId } = useCart();
 
   if (items.length === 0) {
     return (
@@ -36,6 +37,7 @@ const Cart = () => {
         <h1 className="text-3xl font-serif font-bold text-foreground mb-8">Shopping Cart</h1>
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-4">
+            <ContextualUpsell triggerItemId={lastAddedId} />
             {items.map((item) => (
               <div key={item.id} className="bg-card rounded-xl border border-border p-4 flex gap-4">
                 <img src={item.image} alt={item.name} className="w-24 h-24 rounded-lg object-cover" />

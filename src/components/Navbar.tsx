@@ -24,12 +24,13 @@ const Navbar = () => {
   const { items: wishlistItems } = useWishlist();
 
   const navLinks = [
+    { label: "Build My Kit ✨", to: "/kit-builder" },
+    { label: "AI Copilot 🎙️", to: "/copilot" },
     { label: "Birthday", to: "/category/birthday-gifts" },
     { label: "Anniversary", to: "/category/anniversary-gifts" },
     { label: "For Him", to: "/category/gifts-for-him" },
     { label: "For Her", to: "/category/gifts-for-her" },
     { label: "Kids", to: "/category/kids-gifts" },
-    { label: "Corporate", to: "/category/corporate-gifts" },
     { label: "About", to: "/about" },
   ];
 

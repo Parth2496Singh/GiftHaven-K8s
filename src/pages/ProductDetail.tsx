@@ -7,6 +7,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductSection from "@/components/ProductSection";
 import ProductReviews from "@/components/ProductReviews";
+import ScenarioSimulation from "@/components/ScenarioSimulation";
+import ComparisonCard from "@/components/ComparisonCard";
 import { products } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
@@ -138,6 +140,10 @@ const ProductDetail = () => {
             </div>
           </div>
         </div>
+      </div>
+      <div className="container mx-auto px-4 grid md:grid-cols-2 gap-6">
+        <ScenarioSimulation product={product} />
+        <ComparisonCard initialProduct={product} />
       </div>
       <ProductReviews productId={product.id} />
       {related.length > 0 && <ProductSection title="You May Also Like" products={related} />}
