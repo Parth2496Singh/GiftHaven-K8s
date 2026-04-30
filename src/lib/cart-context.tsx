@@ -20,12 +20,15 @@ interface CartContextType {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
+  lastAddedId: number | null;
+  clearLastAdded: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [lastAddedId, setLastAddedId] = useState<number | null>(null);
 
   const addItem = useCallback((item: Omit<CartItem, "quantity">) => {
     setItems((prev) => {
@@ -35,7 +38,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return [...prev, { ...item, quantity: 1 }];
     });
+    setLastAddedId(item.id);
   }, []);
+
+  const clearLastAdded = useCallback(() => setLastAddedId(null), []);
 
   const removeItem = useCallback((id: number) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
@@ -63,7 +69,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const totalPrice = items.reduce((sum, i) => sum + i.price * i.quantity + (i.giftWrap ? 99 * i.quantity : 0), 0);
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, toggleGiftWrap, setMessage, clearCart, totalItems, totalPrice }}>
+    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, toggleGiftWrap, setMessage, clearCart, totalItems, totalPrice, lastAddedId, clearLastAdded }}>
       {children}
     </CartContext.Provider>
   );
