@@ -2,3 +2,18 @@ project_id = "tcwvxzfdsurhekwoctjs"
 
 [functions.gift-chat]
 verify_jwt = false
+
+[functions.kit-builder]
+verify_jwt = false
+
+[functions.compare-products]
+verify_jwt = false
+
+[functions.upsell-suggest]
+verify_jwt = false
+
+[functions.scenario-sim]
+verify_jwt = false
+
+[functions.copilot-refine]
+verify_jwt = false
