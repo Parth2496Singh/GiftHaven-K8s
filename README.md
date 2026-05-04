@@ -1,106 +1,159 @@
-# 🎁 GiftHaven
+# 🎁 GiftHaven Infrastructure & Deployment
 
-**Cloud-Native Containerized E-Commerce Platform** *Complete with Observability, Autoscaling, & Automated Deployment*
+**Containerized Deployment Architecture for an E-Commerce Platform**
 
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white) ![AWS](https://img.shields.io/badge/AWS_EC2-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white) ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white)
 
 ---
 
-## Overview
+## 📌 Project Scope & Acknowledgments
 
-This repository contains the infrastructure configurations and deployment manifests for GiftHaven. It sets up the underlying cluster workloads, internal networking, load-based scaling, and node bootstrapping.
+This repository contains the Kubernetes manifests, container configurations, and deployment scripts for the GiftHaven e-commerce platform. It provides a robust setup for deploying the application in a scalable and observable cloud-native environment.
 
-**Capabilities:**
-* Kubernetes workload management and service abstraction.
-* Horizontal Pod Autoscaling (HPA) via Metrics Server.
-* Helm-managed Prometheus and Grafana monitoring stack.
-* Automated AWS EC2 instance bootstrapping.
 
----
+* **Application Code:** The core React and FastAPI application was developed by [Nitin962dev](https://github.com/Nitin962dev).
+* **My Contribution:** I designed and implemented the complete DevOps lifecycle for this application. All Docker/Docker Compose configurations, Kubernetes manifests (Namespaces, Deployments, Services, HPA), Helm-based monitoring (Prometheus & Grafana), and AWS EC2 automation were authored by me to demonstrate modern infrastructure practices.
 
-## Architecture Flow
+## ✨ Features
 
-1. **User Request** -> Hits Kubernetes NodePort Service.
-2. **Traffic Routing** -> Forwarded to React/FastAPI Deployment Pods.
-3. **Autoscaling** -> Metrics Server tracks CPU; HPA scales pods up/down.
-4. **Observability** -> Prometheus scrapes Pod metrics; Grafana visualizes data.
+-   **Kubernetes Manifests:** Pre-configured `Deployment`, `Service`, `Namespace`, and `HorizontalPodAutoscaler` for easy deployment.
+-   **Automatic Scaling:** A Horizontal Pod Autoscaler (HPA) automatically scales application pods based on CPU load to handle traffic spikes efficiently.
+-   **Containerized Frontend:** A multi-stage `Dockerfile` builds the React application and serves it via Nginx for a lightweight and performant deployment.
+-   **AI-Powered Backend:** Leverages Supabase Edge Functions for advanced features like AI gift chat, product comparisons, and automated kit building.
+-   **Automated Single-Server Deployment:** Includes bootstrap scripts for a simplified setup on a single Linux server using Docker Compose.
 
----
+## 🏛️ Architecture
 
-## Tech Stack
+The application is designed with a decoupled frontend and backend, orchestrated by Kubernetes.
 
-| Component | Technology |
-| :--- | :--- |
-| **Frontend** | React 18 (Vite), TypeScript, Tailwind CSS, Shadcn UI, React Query |
-| **Backend & AI** | FastAPI, TensorFlow, Supabase JS Client |
-| **Infrastructure** | Kubernetes, AWS EC2 (Ubuntu), Nginx, Docker / Compose |
-| **Monitoring** | Prometheus, Grafana, Kubernetes Metrics Server |
+-   **Frontend:** The React single-page application is containerized with Nginx and runs as a Kubernetes `Deployment`.
+-   **Backend & Database:** [Supabase](https://supabase.com/) provides the PostgreSQL database, user authentication, and serverless Edge Functions that power the application's dynamic and AI-driven features.
+-   **Kubernetes Cluster Flow:**
+    1.  User traffic hits a Kubernetes `Service` (e.g., NodePort or LoadBalancer).
+    2.  The `Service` routes traffic to one of the running frontend `Pods`.
+    3.  The Kubernetes Metrics Server monitors pod CPU usage.
+    4.  The `HorizontalPodAutoscaler` adjusts the number of `Deployment` replicas between 1 and 5 based on a 60% CPU utilization target.
 
----
+## 🛠️ Tech Stack
 
-## Deployment Guide
+| Component      | Technology                                    |
+| -------------- | --------------------------------------------- |
+| **Orchestration**  | Kubernetes                                  |
+| **Containerization** | Docker                                      |
+| **Web Server**     | Nginx                                       |
+| **Frontend**       | React, Vite, TypeScript, Tailwind CSS, Shadcn UI |
+| **Backend**        | Supabase (Edge Functions, PostgreSQL, Auth) |
+| **Deployment**     | `kubectl`, Shell Script, Docker Compose      |
 
-### 1. Workloads
-Apply the base deployment manifests, services, and HPA configs.
+## 🚀 Deployment Guide
 
-    kubectl apply -f k8s/
+There are two primary methods for deploying GiftHaven: using Kubernetes for a scalable environment or using Docker Compose for a simple, single-server setup.
 
-### 2. Metrics Server
-Required for HPA functionality.
+### Kubernetes Deployment (Recommended)
 
-    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+This method is ideal for production environments that require scalability and resilience.
 
-### 3. Observability Stack
-Install the kube-prometheus-stack via Helm. Ensure Helm 3+ is installed.
+#### Prerequisites
 
-    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-    helm repo add grafana https://grafana.github.io/helm-charts
-    helm repo update
+-   A running Kubernetes cluster (e.g., Minikube, kind, EKS, GKE).
+-   `kubectl` command-line tool configured to connect to your cluster.
+-   [Kubernetes Metrics Server](https://github.com/kubernetes-sigs/metrics-server) installed in your cluster (for HPA).
 
-    helm install prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
+#### 1. Install Metrics Server
 
----
+The HPA relies on metrics collected by the Metrics Server. If it's not already installed, apply the official manifest:
+```bash
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```
 
-## Monitoring & Operations
+#### 2. Deploy GiftHaven
 
-### Autoscaling
-Verify HPA status and target thresholds:
+Clone this repository and apply all manifests from the `k8s` directory. This single command will create the namespace, deployment, service, and HPA.
 
-    kubectl get hpa
+```bash
+git clone https://github.com/parth2496singh/gifthaven-k8s.git
+cd gifthaven-k8s
+kubectl apply -f k8s/
+```
+The application uses the public Docker image `parthsingh2496/giftastic-wishlist-wonder-gift-ai:latest`.
 
-### Dashboard Access
-Port-forward the monitoring services to access them locally.
+#### 3. Access the Application
 
-**Prometheus (Local port 9090):**
+To access the deployed application, forward a local port to the service:
 
+```bash
+kubectl port-forward svc/gift-ai-service -n gift-ai 5173:5173
+```
+You can now access GiftHaven at **[http://localhost:5173](http://localhost:5173)**.
+
+### EC2 / Docker Compose Deployment
+
+This method is suitable for development, testing, or small-scale deployments on a single virtual machine.
+
+#### Prerequisites
+- An Ubuntu-based Linux server (e.g., AWS EC2).
+- Root or `sudo` privileges.
+
+#### Instructions
+
+Execute the `ec2-bootstrap.sh` script. It will automatically install Docker, clone the repository, and deploy the application using Docker Compose.
+
+```bash
+curl -sL https://raw.githubusercontent.com/parth2496singh/gifthaven-k8s/main/ec2-bootstrap.sh | sudo bash
+```
+The application will be available on port 80 of the server's public IP address.
+
+## 📊 Monitoring & Autoscaling
+
+#### Check HPA Status
+
+You can monitor the Horizontal Pod Autoscaler to see the current and desired number of replicas.
+
+```bash
+# Watch the HPA status update every 5 seconds
+kubectl get hpa -n gift-ai -w
+```
+This will show the target CPU utilization (60%) and the pod count adjusting in response to load.
+
+#### Observability with Prometheus & Grafana
+
+Deploy a complete monitoring stack using the `kube-prometheus-stack` Helm chart.
+
+**Prerequisites:**
+- Helm package manager
+
+**1. Add Helm Repository:**
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+```
+
+**2. Install `kube-prometheus-stack`:**
+```bash
+helm install prometheus-stack prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --create-namespace
+```
+
+**3. Access Dashboards:**
+
+- **Prometheus:**
+    ```bash
     kubectl port-forward svc/prometheus-stack-kube-prom-prometheus -n monitoring 9090:9090
+    ```
+    Access at `http://localhost:9090`.
 
-**Grafana (Local port 3000):**
+- **Grafana:**
+    ```bash
+    # Get the admin password
+    kubectl get secret prometheus-stack-grafana -n monitoring -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
 
+    # Port forward the service
     kubectl port-forward svc/prometheus-stack-grafana -n monitoring 3000:80
+    ```
+    Access at `http://localhost:3000`. Login with username `admin` and the password retrieved above.
 
-*(Default Grafana credentials: admin / prom-operator)*
-
----
-
-## AWS EC2 Bootstrapping
-
-Instance provisioning is handled via an EC2 User Data script. Pass this script into the User Data field during EC2 launch, or run it manually on a fresh Ubuntu instance:
-
-    #!/bin/bash
-    set -e
-
-    apt update -y
-    apt install -y curl git
-
-    bash <(curl -s https://raw.githubusercontent.com/Nitin962dev/giftastic-wishlist-wonder/main/Automatic-deploy-gift-ai-linux.sh)
-
----
-
-## Roadmap
-
-* [ ] Implement NGINX Ingress for domain routing.
-* [ ] Configure CI/CD pipeline via GitHub Actions.
-* [ ] Integrate Loki for centralized log aggregation.
-* [ ] Package application manifests into a custom Helm chart.
-* [ ] Enable TLS/HTTPS termination via cert-manager.
+  ## 🛣️ Future Roadmap
+- [ ] Add an NGINX Ingress Controller for domain-based routing.
+- [ ] Implement a CI/CD pipeline using GitHub Actions to automate image builds.
+- [ ] Configure TLS/HTTPS termination using `cert-manager`.
