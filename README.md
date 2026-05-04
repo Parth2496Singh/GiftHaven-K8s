@@ -1,165 +1,106 @@
-<div align="center">
-
 # 🎁 GiftHaven
 
-**An AI-First E-Commerce Platform & Smart Recommendation Engine**
+**Cloud-Native Containerized E-Commerce Platform** *Complete with Observability, Autoscaling, & Automated Deployment*
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![React](https://img.shields.io/badge/React-18.3-61DAFB.svg?logo=react)
-![Vite](https://img.shields.io/badge/Vite-5.4-646CFF.svg?logo=vite)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6.svg?logo=typescript)
-![FastAPI](https://img.shields.io/badge/FastAPI-AI_Backend-009688.svg?logo=fastapi)
-![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED.svg?logo=docker)
-![AWS](https://img.shields.io/badge/AWS-EC2_Deployed-FF9900.svg?logo=amazonaws)
-
-</div>
+![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white) ![AWS](https://img.shields.io/badge/AWS_EC2-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white) ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white)
 
 ---
 
-## 📑 Table of Contents
-* [About the Project](#-about-the-project)
-* [Core Features](#-core-features)
-* [Technology Stack](#-technology-stack)
-* [Local Development Setup](#-local-development-setup)
-* [Architecture and Deployment](#-architecture-and-deployment)
-* [Live Access](#-live-access)
+## Overview
+
+This repository contains the infrastructure configurations and deployment manifests for GiftHaven. It sets up the underlying cluster workloads, internal networking, load-based scaling, and node bootstrapping.
+
+**Capabilities:**
+* Kubernetes workload management and service abstraction.
+* Horizontal Pod Autoscaling (HPA) via Metrics Server.
+* Helm-managed Prometheus and Grafana monitoring stack.
+* Automated AWS EC2 instance bootstrapping.
 
 ---
 
-## 📖 About the Project
+## Architecture Flow
 
-This repository contains the application codebase for **GiftHaven**. It is an advanced e-commerce platform built to provide smart product recommendations, a seamless shopping experience, and robust user management. The platform utilizes a modern containerized architecture, blending a high-performance React frontend with a dual-backend system for e-commerce logic and AI functionalities.
-
----
-
-## 🚀 Core Features
-
-* **🛒 E-Commerce User Flow**
-  Includes dedicated pages for browsing products, viewing categories, managing a shopping cart, and a complete checkout process.
-
-* **🤖 AI Chat Integration & Recommendations**
-  A global chat widget integrated into the routing structure to provide users with AI-driven assistance, powered by FastAPI and TensorFlow.
-
-* **👓 WebAR Product Previews**
-  Integrated Augmented Reality capabilities allowing users to visualize products in their physical space before purchasing.
-
-* **📦 Order Management**
-  Authenticated routes for users to track and view their historical orders securely.
-
-* **🔒 Authentication**
-  Secure user login and registration powered by Supabase and managed globally via React Context.
-
-* **📱 Responsive Design**
-  Fully accessible and responsive UI components built with Radix UI and styled using Tailwind CSS.
+1. **User Request** -> Hits Kubernetes NodePort Service.
+2. **Traffic Routing** -> Forwarded to React/FastAPI Deployment Pods.
+3. **Autoscaling** -> Metrics Server tracks CPU; HPA scales pods up/down.
+4. **Observability** -> Prometheus scrapes Pod metrics; Grafana visualizes data.
 
 ---
 
-## 🛠️ Technology Stack
+## Tech Stack
 
-### 💻 Frontend
-* **Framework:** React 18 with Vite
-* **Language:** TypeScript
-* **Styling:** Tailwind CSS and Tailwind-Merge
-* **UI Components:** Shadcn UI (built on Radix UI primitives)
-* **Client-Side Routing:** React Router DOM v6
-* **State & Data Fetching:** TanStack React Query and native React Context API
-* **Form Validation:** React Hook Form combined with Zod schema validation
-
-### ⚙️ Backend & Infrastructure
-* **Databases & Auth:** Supabase JS Client
-* **AI Services:** FastAPI and TensorFlow
-* **Infrastructure:** AWS EC2 (Ubuntu Linux)
-* **Containerization:** Docker and Docker Compose
-* **Web Server / Proxy:** Nginx
+| Component | Technology |
+| :--- | :--- |
+| **Frontend** | React 18 (Vite), TypeScript, Tailwind CSS, Shadcn UI, React Query |
+| **Backend & AI** | FastAPI, TensorFlow, Supabase JS Client |
+| **Infrastructure** | Kubernetes, AWS EC2 (Ubuntu), Nginx, Docker / Compose |
+| **Monitoring** | Prometheus, Grafana, Kubernetes Metrics Server |
 
 ---
 
-## 💻 Local Development Setup
+## Deployment Guide
 
-Follow these instructions to set up the frontend project locally for development.
+### 1. Workloads
+Apply the base deployment manifests, services, and HPA configs.
 
-* **Clone the repository**
-  ```bash
-  git clone [https://github.com/Nitin962dev/giftastic-wishlist-wonder.git](https://github.com/Nitin962dev/giftastic-wishlist-wonder.git)
-  ```
+    kubectl apply -f k8s/
 
-* **Navigate to the project directory**
-  ```bash
-  cd giftastic-wishlist-wonder
-  ```
+### 2. Metrics Server
+Required for HPA functionality.
 
-* **Install dependencies**
-  ```bash
-  npm install
-  ```
+    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 
-* **Start the local development server**
-  ```bash
-  npm run dev
-  ```
+### 3. Observability Stack
+Install the kube-prometheus-stack via Helm. Ensure Helm 3+ is installed.
 
-* **Run tests**
-  ```bash
-  npm run test
-  ```
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm repo add grafana https://grafana.github.io/helm-charts
+    helm repo update
+
+    helm install prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
 
 ---
 
-## 🚢 Architecture and Deployment
+## Monitoring & Operations
 
-The GiftHaven platform uses a modern containerized architecture. The entire stack (Frontend, API services, and dependencies) is orchestrated using Docker Compose. The application is hosted on an AWS EC2 instance, utilizing Nginx as a reverse proxy to serve the React application and route API requests securely.
+### Autoscaling
+Verify HPA status and target thresholds:
 
-### 🌍 Live Access
+    kubectl get hpa
 
-The application is deployed and publicly accessible via a static AWS Elastic IP address. This ensures a persistent, reliable entry point for users to reach the platform anytime, anywhere. 
+### Dashboard Access
+Port-forward the monitoring services to access them locally.
 
-* **Live Deployment URL:**
-  [http://52.204.222.90](http://52.204.222.90)
-  
+**Prometheus (Local port 9090):**
 
-### 🤖 Automated EC2 Deployment (User Data)
+    kubectl port-forward svc/prometheus-stack-kube-prom-prometheus -n monitoring 9090:9090
 
-The deployment process is fully automated. When provisioning a new AWS EC2 instance, pass the following bash script into the **User Data** field. 
+**Grafana (Local port 3000):**
 
-This script will automatically update the system, install the required base packages, and execute the master deployment script from the GitHub repository, which handles installing Docker, cloning the project, and starting the Docker Compose cluster on boot.
+    kubectl port-forward svc/prometheus-stack-grafana -n monitoring 3000:80
 
-```bash
-#!/bin/bash
-set -e
+*(Default Grafana credentials: admin / prom-operator)*
 
-echo "Updating system..."
-apt update -y
-apt install -y curl git
+---
 
-echo "Running deployment script from GitHub..."
-bash <(curl -s [https://raw.githubusercontent.com/Nitin962dev/giftastic-wishlist-wonder/main/Automatic-deploy-gift-ai-linux.sh](https://raw.githubusercontent.com/Nitin962dev/giftastic-wishlist-wonder/main/Automatic-deploy-gift-ai-linux.sh))
-```
+## AWS EC2 Bootstrapping
 
-### 🔧 Manual Deployment Steps
+Instance provisioning is handled via an EC2 User Data script. Pass this script into the User Data field during EC2 launch, or run it manually on a fresh Ubuntu instance:
 
-If you are accessing an existing server and need to trigger the deployment process manually without the User Data hook, follow these steps:
+    #!/bin/bash
+    set -e
 
-* **Update system packages**
-  ```bash
-  apt update -y
-  ```
+    apt update -y
+    apt install -y curl git
 
-* **Install curl and git**
-  ```bash
-  apt install -y curl git
-  ```
+    bash <(curl -s https://raw.githubusercontent.com/Nitin962dev/giftastic-wishlist-wonder/main/Automatic-deploy-gift-ai-linux.sh)
 
-* **Execute the automated deployment script**
-  ```bash
-  bash <(curl -s [https://raw.githubusercontent.com/Nitin962dev/giftastic-wishlist-wonder/main/Automatic-deploy-gift-ai-linux.sh](https://raw.githubusercontent.com/Nitin962dev/giftastic-wishlist-wonder/main/Automatic-deploy-gift-ai-linux.sh))
-  ```
+---
 
-* **View running containers**
-  ```bash
-  docker compose ps
-  ```
+## Roadmap
 
-* **View live application logs**
-  ```bash
-  docker compose logs -f
-  ```
+* [ ] Implement NGINX Ingress for domain routing.
+* [ ] Configure CI/CD pipeline via GitHub Actions.
+* [ ] Integrate Loki for centralized log aggregation.
+* [ ] Package application manifests into a custom Helm chart.
+* [ ] Enable TLS/HTTPS termination via cert-manager.
