@@ -22,6 +22,9 @@ This repository contains the Kubernetes manifests, container configurations, and
 -   **AI-Powered Backend:** Leverages Supabase Edge Functions for advanced features like AI gift chat, product comparisons, and automated kit building.
 -   **Automated Single-Server Deployment:** Includes bootstrap scripts for a simplified setup on a single Linux server using Docker Compose.
 
+<img width="2637" height="672" alt="Screenshot from 2026-05-04 21-30-49" src="https://github.com/user-attachments/assets/f5efd941-05d7-403f-9ef0-048b80b3871c" />
+
+
 ## 🏛️ Architecture
 
 The application is designed with a decoupled frontend and backend, orchestrated by Kubernetes.
@@ -152,6 +155,11 @@ helm install prometheus-stack prometheus-community/kube-prometheus-stack \
     kubectl port-forward svc/prometheus-stack-grafana -n monitoring 3000:80
     ```
     Access at `http://localhost:3000`. Login with username `admin` and the password retrieved above.
+
+<img width="2842" height="1394" alt="Screenshot from 2026-05-04 20-23-09" src="https://github.com/user-attachments/assets/f1f0f5ee-3270-4c58-8c67-f56b97fdac93" />
+
+
+<img width="2842" height="1298" alt="Screenshot from 2026-05-04 19-54-32" src="https://github.com/user-attachments/assets/9bc36b61-533a-48e9-a0f4-d1e3faaac3e6" />
 
   ## 🛣️ Future Roadmap
 - [ ] Add an NGINX Ingress Controller for domain-based routing.
