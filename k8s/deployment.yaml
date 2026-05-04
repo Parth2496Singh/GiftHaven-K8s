@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gift-ai-deployment
+  namespace: gift-ai
+spec:
+  selector:
+    matchLabels:
+      app: gift-ai
+  template:
+    metadata:
+      labels:
+        app: gift-ai
+    spec:
+      containers:
+      - name: myapp
+        image: parthsingh2496/giftastic-wishlist-wonder-gift-ai:latest
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            memory: 256Mi
+            cpu: 300Mi
+        ports:
+        - containerPort: 5173
