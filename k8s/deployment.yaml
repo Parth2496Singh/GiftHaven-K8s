@@ -4,6 +4,7 @@ metadata:
   name: gift-ai-deployment
   namespace: gift-ai
 spec:
+  replicas: 3
   selector:
     matchLabels:
       app: gift-ai
